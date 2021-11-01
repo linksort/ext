@@ -6,10 +6,11 @@
   "description": "Save your links",
   "homepage_url": "https://linksort.com",
   "permissions": [
+    "identity",
+    "storage",
     "activeTab",
     "tabs",
-    "https://linksort.com/",
-    "http://localhost:8080/"
+    "https://linksort.com/"
   ],
   "icons": {
     "32": "icon-32x32.png",
@@ -19,6 +20,10 @@
   },
   "browser_action": {
     "default_popup": "popover.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   },
   "content_security_policy": "script-src 'self'; object-src 'self';"
 }
