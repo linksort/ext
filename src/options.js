@@ -18,20 +18,7 @@ function showLogout() {
   authenticateButton.style.display = "none";
 }
 
-function handleRedirect(redirect) {
-  const parsed = new URL(redirect);
-  const encodedToken = parsed.searchParams.get("token");
-  const token = decodeURIComponent(encodedToken);
-  chrome.storage.local.set({ token }, () => {
-    showLogout();
-  });
-}
-
 function doAuth() {
-  doAuthWithPolyfill();
-}
-
-function doAuthWithPolyfill() {
   const redirectURL = `${BASE_URI}/oauth`;
   const encodedRedirectURL = encodeURIComponent(redirectURL);
   const authURL = `${BASE_URI}/oauth?redirect_uri=${encodedRedirectURL}`;
@@ -41,20 +28,14 @@ function doAuthWithPolyfill() {
       interactive: true,
       url: authURL,
     },
-    handleRedirect
-  );
-}
-
-function doAuthWithIdentity() {
-  const redirectURL = encodeURIComponent(chrome.identity.getRedirectURL());
-  const authURL = `${BASE_URI}/oauth?redirect_uri=${redirectURL}`;
-
-  return chrome.identity.launchWebAuthFlow(
-    {
-      interactive: true,
-      url: authURL,
-    },
-    handleRedirect
+    (redirect) => {
+      const parsed = new URL(redirect);
+      const encodedToken = parsed.searchParams.get("token");
+      const token = decodeURIComponent(encodedToken);
+      chrome.storage.local.set({ token }, () => {
+        showLogout();
+      });
+    }
   );
 }
 
