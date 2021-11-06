@@ -2,6 +2,9 @@ const message = document.getElementById("message");
 const clearButton = document.getElementById("clear");
 const authenticateButton = document.getElementById("authenticate");
 
+const BASE_URI = `https://linksort.com`;
+const NULL = "NULL";
+
 function showLogin() {
   message.innerText = "Please sign in to save your links to Linksort.";
   clearButton.style.display = "none";
@@ -9,7 +12,8 @@ function showLogin() {
 }
 
 function showLogout() {
-  message.innerHTML = "You are signed into Linksort. &#x1f60a";
+  message.innerHTML =
+    "You are now signed into your Linksort browser extension. <br /><br />Close this window and use the Linksort icon in your browser's toolbar to save links as you browse.";
   clearButton.style.display = "inline-block";
   authenticateButton.style.display = "none";
 }
@@ -28,11 +32,11 @@ function doAuth() {
 }
 
 function doAuthWithPolyfill() {
-  const redirectURL = `https://linksort.com/oauth`;
+  const redirectURL = `${BASE_URI}/oauth`;
   const encodedRedirectURL = encodeURIComponent(redirectURL);
-  const authURL = `https://linksort.com/oauth?redirect_uri=${encodedRedirectURL}`;
+  const authURL = `${BASE_URI}/oauth?redirect_uri=${encodedRedirectURL}`;
 
-  return window.webextLaunchWebAuthFlow(
+  return launchWebAuthFlow(
     {
       interactive: true,
       url: authURL,
@@ -43,7 +47,7 @@ function doAuthWithPolyfill() {
 
 function doAuthWithIdentity() {
   const redirectURL = encodeURIComponent(chrome.identity.getRedirectURL());
-  const authURL = `https://linksort.com/oauth?redirect_uri=${redirectURL}`;
+  const authURL = `${BASE_URI}/oauth?redirect_uri=${redirectURL}`;
 
   return chrome.identity.launchWebAuthFlow(
     {
@@ -54,8 +58,53 @@ function doAuthWithIdentity() {
   );
 }
 
+function launchWebAuthFlow({ url, interactive = false }, callback) {
+  chrome.windows.create(
+    {
+      type: "popup",
+      url,
+      state: "normal",
+      width: 600,
+      height: 600,
+    },
+    (wInfo) => {
+      const windowId = wInfo.id;
+      const tabId = wInfo.tabs[0].id;
+
+      chrome.webNavigation.onCompleted.addListener(onBeforeRedirect);
+      chrome.webNavigation.onDOMContentLoaded.addListener(onDOMContentLoaded);
+
+      function onBeforeRedirect(details) {
+        if (details.url && details.url.includes("token")) {
+          callback(details.url);
+          cleanup();
+        }
+      }
+
+      function onDOMContentLoaded(details) {
+        if (details.frameId || details.tabId !== tabId) return;
+
+        if (interactive) {
+          chrome.windows.update(windowId, {
+            focused: true,
+            state: "normal",
+          });
+        }
+
+        chrome.webNavigation.onDOMContentLoaded.removeListener(
+          onDOMContentLoaded
+        );
+      }
+
+      function cleanup() {
+        chrome.windows.remove(windowId);
+      }
+    }
+  );
+}
+
 chrome.storage.local.get(["token"], (values) => {
-  if (values.token) {
+  if (values.token && values.token !== NULL) {
     showLogout();
   } else {
     showLogin();
@@ -64,7 +113,7 @@ chrome.storage.local.get(["token"], (values) => {
 });
 
 clearButton.addEventListener("click", () => {
-  chrome.storage.local.set({ token: null }, () => {
+  chrome.storage.local.set({ token: NULL }, () => {
     showLogin();
   });
 });

@@ -6,9 +6,6 @@
   "description": "Save your links",
   "homepage_url": "https://linksort.com",
   "permissions": [
-    "identity",
-    "webRequest",
-    "webRequestBlocking",
     "webNavigation",
     "storage",
     "activeTab",

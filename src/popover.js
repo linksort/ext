@@ -1,5 +1,7 @@
 const main = document.querySelector("main");
 
+const BASE_URI = `https://linksort.com`;
+
 function renderError(error) {
   main.innerHTML = `<div class="error"><img src="hushed-face.svg"><h1>Uh oh!</h1><p>${error}</p></div>`;
 }
@@ -18,7 +20,7 @@ function openOptionsPage() {
 }
 
 chrome.storage.local.get(["token"], (store) => {
-  if (!store.token) {
+  if (!store.token || store.token === "NULL") {
     openOptionsPage();
     renderError("Please sign in.");
     return;
@@ -27,7 +29,7 @@ chrome.storage.local.get(["token"], (store) => {
   chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
     const tab = tabs[0];
 
-    fetch("https://linksort.com/api/links", {
+    fetch(`${BASE_URI}/api/links`, {
       headers: new Headers({
         "Content-Type": "application/json",
         Authorization: `Bearer ${store.token}`,
