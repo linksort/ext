@@ -5,13 +5,7 @@
   "version": "0.1",
   "description": "Save your links",
   "homepage_url": "https://linksort.com",
-  "permissions": [
-    "webNavigation",
-    "storage",
-    "activeTab",
-    "tabs",
-    "https://linksort.com/"
-  ],
+  "permissions": ["webNavigation", "storage", "tabs", "https://linksort.com/"],
   "icons": {
     "32": "icon-32x32.png",
     "48": "icon-48x48.png",

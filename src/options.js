@@ -39,47 +39,24 @@ function doAuth() {
   );
 }
 
-function launchWebAuthFlow({ url, interactive = false }, callback) {
-  chrome.windows.create(
+function launchWebAuthFlow({ url }, callback) {
+  chrome.tabs.create(
     {
-      type: "popup",
       url,
-      state: "normal",
-      width: 600,
-      height: 600,
     },
     (wInfo) => {
       const windowId = wInfo.id;
-      const tabId = wInfo.tabs[0].id;
 
-      chrome.webNavigation.onCompleted.addListener(onBeforeRedirect);
-      chrome.webNavigation.onDOMContentLoaded.addListener(onDOMContentLoaded);
-
-      function onBeforeRedirect(details) {
-        if (details.url && details.url.includes("token")) {
+      function handleRedirect(details) {
+        if (details.url && details.url.includes("?token=")) {
           callback(details.url);
-          cleanup();
+          chrome.tabs.remove(windowId);
         }
       }
 
-      function onDOMContentLoaded(details) {
-        if (details.frameId || details.tabId !== tabId) return;
-
-        if (interactive) {
-          chrome.windows.update(windowId, {
-            focused: true,
-            state: "normal",
-          });
-        }
-
-        chrome.webNavigation.onDOMContentLoaded.removeListener(
-          onDOMContentLoaded
-        );
-      }
-
-      function cleanup() {
-        chrome.windows.remove(windowId);
-      }
+      chrome.webNavigation.onCommitted.addListener(handleRedirect, {
+        url: [{ hostEquals: "linksort.com" }],
+      });
     }
   );
 }
