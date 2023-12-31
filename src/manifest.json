@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Linksort",
   "short_name": "Linksort",
-  "version": "0.1",
+  "version": "1.0",
   "description": "Save your links",
   "homepage_url": "https://linksort.com",
   "permissions": [
